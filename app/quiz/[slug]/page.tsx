@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import React from "react";
+import { Player, Controls } from "@lottiefiles/react-lottie-player";
 
 const AngularQuestions = [
   "What is Angular?",
@@ -19,6 +20,8 @@ interface QuizState {
 }
 
 const Quiz = ({ params }: { params: { slug: string } }) => {
+  const animationURL =
+    "https://assets3.lottiefiles.com/packages/lf20_JExdDIS87T.json";
   const initialState: QuizState = {
     currentQuestion: 0,
     questions: [],
@@ -49,6 +52,7 @@ const Quiz = ({ params }: { params: { slug: string } }) => {
   const [quizComplete, setQuizComplete] = React.useState<boolean>(false);
 
   const sendAnswer = async () => {
+    setIsLoading(true);
     const { responses, currentQuestion, questions } = currentState;
 
     const newResponses = responses;
@@ -75,15 +79,18 @@ const Quiz = ({ params }: { params: { slug: string } }) => {
     });
 
     setAnswerText("");
+    setIsLoading(false);
   };
 
   return (
     <div className="flex flex-col w-full h-full gap-4 justify-between">
-      <Link href="/">{"<-"} Try Another Quiz</Link>
+      <Link href="/" className="border rounded-md w-48 p-2 text-center">
+        {"<-"} Try Another Quiz
+      </Link>
       <div className="flex w-full h-full gap-10 justify-between">
         <section className="flex flex-col w-full h-full gap-4">
           <h1>Quiz for {params.slug.toUpperCase()}</h1>
-          <div className="flex flex-col border p-4 rounded-md gap-4 h-52">
+          <div className="flex flex-col border p-4 rounded-md gap-4 h-64">
             {!quizComplete ? (
               <>
                 <span className="w-full flex">
@@ -95,16 +102,34 @@ const Quiz = ({ params }: { params: { slug: string } }) => {
                     {currentState.questions[currentState.currentQuestion]}
                   </h2>
                 </label>
-                <input
-                  name="answer-box"
-                  type="text"
-                  className="h-full text-black p-4"
-                  value={answerText}
-                  onChange={(e) => {
-                    setAnswerText(e.target.value);
-                  }}
-                />
-                <button onClick={sendAnswer}>Submit Answer</button>
+                <div className="flex flex-col gap-4">
+                  {!isLoading ? (
+                    <>
+                      <textarea
+                        name="answer-box"
+                        className="h-full text-white p-4 bg-gray-700 rounded-md border"
+                        value={answerText}
+                        placeholder="Enter your answer here..."
+                        onChange={(e) => {
+                          setAnswerText(e.target.value);
+                        }}
+                      />
+                      <button
+                        className="border rounded-md w-40 p-2 text-center"
+                        onClick={sendAnswer}
+                      >
+                        Submit Answer
+                      </button>
+                    </>
+                  ) : (
+                    <Player
+                      autoplay
+                      loop
+                      src="/anim.json"
+                      style={{ height: "150px", width: "200px" }}
+                    />
+                  )}
+                </div>
               </>
             ) : (
               <>
@@ -115,12 +140,12 @@ const Quiz = ({ params }: { params: { slug: string } }) => {
           </div>
         </section>
 
-        <section className="w-full h-1/2 flex flex-col gap-4">
+        <section className="w-full max-h-full flex flex-col gap-4">
           <h1>Responses</h1>
-          <div className="flex flex-col h-full divide-y-2 gap-4 bg-slate-900 rounded-md px-4 pb-4">
+          <div className="flex flex-col h-[400px] max-h-[400px] divide-y-2 gap-4 bg-slate-900 rounded-md px-4 pb-4 overflow-y-auto">
             {currentState.responses.map((response, i) => {
               return (
-                <div className="flex flex-col gap-4 pt-4" key={i}>
+                <div className="flex flex-col gap-2 pt-4" key={i}>
                   <h2>{response.question}</h2>
                   <span>Your Answer: {response.answer}</span>
                   <span>Explanation: {response.explanation}</span>

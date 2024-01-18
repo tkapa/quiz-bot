@@ -17,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="flex flex-col h-screen">
+      <body className="flex flex-col max-h-screen h-screen">
         <header className="bg-gray-900 flex justify-between items-center h-16 p-4 px-10">
           <Link className="flex gap-2" href="/">
             <h1>SSW.QuizBot</h1>
