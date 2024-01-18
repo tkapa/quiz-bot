@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import React from "react";
-import { Player, Controls } from "@lottiefiles/react-lottie-player";
+import { Player } from "@lottiefiles/react-lottie-player";
 
 const AngularQuestions = [
   "What is Angular?",
@@ -12,6 +12,13 @@ const AngularQuestions = [
 const CssQuestions = ["What is Css?", "What is Css?", "What is Css?"];
 const ScrumQuestions = ["What is Scrum?", "What is Scrum?", "What is Scrum?"];
 
+const apiBaseURL = "https://localhost:7237";
+
+interface SubmitAnswerRequest {
+  questionText: string;
+  answerText: string;
+}
+
 interface QuizState {
   currentQuestion: number;
   questions: string[];
@@ -20,8 +27,6 @@ interface QuizState {
 }
 
 const Quiz = ({ params }: { params: { slug: string } }) => {
-  const animationURL =
-    "https://assets3.lottiefiles.com/packages/lf20_JExdDIS87T.json";
   const initialState: QuizState = {
     currentQuestion: 0,
     questions: [],
@@ -54,8 +59,19 @@ const Quiz = ({ params }: { params: { slug: string } }) => {
   const sendAnswer = async () => {
     setIsLoading(true);
     const { responses, currentQuestion, questions } = currentState;
-
     const newResponses = responses;
+
+    //TODO: Post to /Quiz/SubmitAnswer
+    const res = await fetch(`${apiBaseURL}/Quiz/SubmitAnswer`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        questionText: questions[currentQuestion],
+        answerText: answerText,
+      } as SubmitAnswerRequest),
+    });
 
     newResponses.push({
       question: questions[currentQuestion],
