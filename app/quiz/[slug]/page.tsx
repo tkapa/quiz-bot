@@ -12,17 +12,25 @@ const AngularQuestions = [
 const CssQuestions = ["What is Css?", "What is Css?", "What is Css?"];
 const ScrumQuestions = ["What is Scrum?", "What is Scrum?", "What is Scrum?"];
 
-const apiBaseURL = "https://localhost:7237";
+const apiBaseURL = "http://localhost:5294";
 
 interface SubmitAnswerRequest {
   questionText: string;
   answerText: string;
 }
 
+interface SubmitAnswerResponse {
+  question: string;
+  answer: string;
+  explanation: string;
+  confidence: number;
+  correct: boolean;
+}
+
 interface QuizState {
   currentQuestion: number;
   questions: string[];
-  responses: any[];
+  responses: SubmitAnswerResponse[];
   correct: number;
 }
 
@@ -73,13 +81,9 @@ const Quiz = ({ params }: { params: { slug: string } }) => {
       } as SubmitAnswerRequest),
     });
 
-    newResponses.push({
-      question: questions[currentQuestion],
-      answer: answerText,
-      correct: true,
-      explanation: "This is a placeholder explanation",
-      confidence: 0,
-    });
+    console.log();
+
+    newResponses.push((await res.json()) as SubmitAnswerResponse);
 
     var nextQuestion = currentQuestion + 1;
 
@@ -162,7 +166,18 @@ const Quiz = ({ params }: { params: { slug: string } }) => {
             {currentState.responses.map((response, i) => {
               return (
                 <div className="flex flex-col gap-2 pt-4" key={i}>
-                  <h2>{response.question}</h2>
+                  <div
+                    className={`flex justify-between ${
+                      response.correct ? "text-green-400" : "text-red-400"
+                    }`}
+                  >
+                    <h2>
+                      Question {i + 1} <br />
+                      {response.question}
+                    </h2>
+                    <span>{response.correct ? "CORRECT" : "INCORRECT"}</span>
+                  </div>
+                  <hr />
                   <span>Your Answer: {response.answer}</span>
                   <span>Explanation: {response.explanation}</span>
                   <span>Confidence: {response.confidence}</span>
