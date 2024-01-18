@@ -3,17 +3,23 @@ import Link from "next/link";
 import React from "react";
 import { Player } from "@lottiefiles/react-lottie-player";
 
-const AngularQuestions = [
-  "What is Angular?",
-  "What is Angular CLI?",
-  "What is Angular Material?",
-];
-
-const CssQuestions = ["What is Css?", "What is Css?", "What is Css?"];
-const ScrumQuestions = ["What is Scrum?", "What is Scrum?", "What is Scrum?"];
-
 const apiBaseURL = "http://localhost:5294";
 
+const AngularQuestions = [
+  "What is the purpose of the pathMatch: 'full' attribute in Angular routes?",
+  "What is the difference between the ngOnChanges and ngOnInit lifecycle hooks?",
+  "Angular is described as an opinionated framework. What does that mean?",
+];
+const CssQuestions = [
+  "What is the correct syntax for CSS variables?",
+  "Write an example of a media query that will apply styles for mobile devices",
+  'What is the CSS specificity of the selector “div.section #icon a.img.my-img#user:hover"?',
+];
+const ScrumQuestions = [
+  "What is the primary goal of the Daily Scrum?",
+  "What is the recommended size of a Scrum Development Team?",
+  "What is the purpose of the Sprint Review in Scrum?",
+];
 interface SubmitAnswerRequest {
   questionText: string;
   answerText: string;
@@ -32,14 +38,17 @@ interface QuizState {
   questions: string[];
   responses: SubmitAnswerResponse[];
   correct: number;
+  quizComplete: boolean;
 }
 
 const Quiz = ({ params }: { params: { slug: string } }) => {
+  const characterLimit = 50;
   const initialState: QuizState = {
     currentQuestion: 0,
     questions: [],
     responses: [],
     correct: 0,
+    quizComplete: false,
   };
 
   switch (params.slug) {
@@ -62,11 +71,14 @@ const Quiz = ({ params }: { params: { slug: string } }) => {
 
   const [answerText, setAnswerText] = React.useState<string>("");
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
-  const [quizComplete, setQuizComplete] = React.useState<boolean>(false);
+  const [isError, setIsError] = React.useState<boolean>(false);
 
   const sendAnswer = async () => {
+    if (answerText.length > characterLimit) return;
+
     setIsLoading(true);
-    const { responses, currentQuestion, questions } = currentState;
+    const { quizComplete, responses, currentQuestion, questions, correct } =
+      currentState;
     const newResponses = responses;
 
     //TODO: Post to /Quiz/SubmitAnswer
@@ -81,21 +93,18 @@ const Quiz = ({ params }: { params: { slug: string } }) => {
       } as SubmitAnswerRequest),
     });
 
-    console.log();
+    const response = (await res.json()) as SubmitAnswerResponse;
 
-    newResponses.push((await res.json()) as SubmitAnswerResponse);
+    newResponses.push(response);
 
     var nextQuestion = currentQuestion + 1;
-
-    if (currentQuestion === questions.length - 1) {
-      setQuizComplete(true);
-      nextQuestion = currentQuestion;
-    }
 
     setCurrentState({
       ...currentState,
       responses: newResponses,
       currentQuestion: nextQuestion,
+      correct: response.correct ? correct + 1 : correct,
+      quizComplete: currentQuestion === questions.length - 1,
     });
 
     setAnswerText("");
@@ -110,8 +119,8 @@ const Quiz = ({ params }: { params: { slug: string } }) => {
       <div className="flex w-full h-full gap-10 justify-between">
         <section className="flex flex-col w-full h-full gap-4">
           <h1>Quiz for {params.slug.toUpperCase()}</h1>
-          <div className="flex flex-col border p-4 rounded-md gap-4 h-64">
-            {!quizComplete ? (
+          <div className="flex flex-col border p-4 rounded-md gap-4 h-fit">
+            {!currentState.quizComplete ? (
               <>
                 <span className="w-full flex">
                   Question {currentState.currentQuestion + 1} of{" "}
@@ -125,17 +134,31 @@ const Quiz = ({ params }: { params: { slug: string } }) => {
                 <div className="flex flex-col gap-4">
                   {!isLoading ? (
                     <>
-                      <textarea
-                        name="answer-box"
-                        className="h-full text-white p-4 bg-gray-700 rounded-md border"
-                        value={answerText}
-                        placeholder="Enter your answer here..."
-                        onChange={(e) => {
-                          setAnswerText(e.target.value);
-                        }}
-                      />
+                      <div className="w-full h-full flex flex-col gap-2">
+                        <textarea
+                          name="answer-box"
+                          className={`h-full text-white p-4 bg-gray-700 rounded-md border ${
+                            isError ? "border-red-400" : "border-gray-700"
+                          }`}
+                          value={answerText}
+                          placeholder="Enter your answer here..."
+                          onChange={(e) => {
+                            const answer = e.target.value;
+                            if (answer.length > characterLimit) {
+                              setIsError(true);
+                            } else {
+                              setIsError(false);
+                            }
+                            setAnswerText(e.target.value);
+                          }}
+                        />
+                        <span
+                          className={`${isError ? "text-red-400" : ""}`}
+                        >{`${answerText.length} of ${characterLimit}`}</span>
+                      </div>
                       <button
-                        className="border rounded-md w-40 p-2 text-center"
+                        className="border rounded-md w-40 p-2 text-center disabled:border-gray-700 disabled:text-gray-700"
+                        disabled={isError}
                         onClick={sendAnswer}
                       >
                         Submit Answer
